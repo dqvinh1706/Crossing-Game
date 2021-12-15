@@ -132,6 +132,8 @@ void CAlienShip::flyAway(int y)
 
 void CAlienShip::Tell()
 {
-	PlaySound(TEXT("AlienShip.wav"), NULL, SND_FILENAME);
+	PlaySound(TEXT("AlienShip.wav"), NULL, SND_FILENAME | SND_ASYNC);
+	while (isFlyAway() == false) {}
+	PlaySound(NULL, 0, 0);
 }
 

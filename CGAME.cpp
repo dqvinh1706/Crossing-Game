@@ -177,10 +177,10 @@ void CGAME::musicThread()
 		if (!mPeople.isFinish()) {
 			if (!mPeople.isDead()) {
 				if (!isPause) {
-					//Sleep(5000);
-					/*int randomAnimalIndex = RandomInt(listAnimalSound.size() - 1, 0);
-					listAnimalSound[randomAnimalIndex]->Tell();*/
-					//isRunningBgMusic = false;
+				/*	int randomAnimalIndex = RandomInt(listAnimalSound.size() - 1, 0);
+					listAnimalSound[randomAnimalIndex]->Tell();
+
+					isRunningBgMusic = false;*/
 				}
 			}
 			else {
@@ -188,14 +188,10 @@ void CGAME::musicThread()
 					mAlienShip.Tell();
 					isRunningBgMusic = false;
 				}
-				else {
-					PlaySound(NULL, 0, 0);
-					isRunningBgMusic = false;
-				}
 			}
 		}
 		else {
-			PlaySound(TEXT("upLevelSound.wav"), NULL, SND_FILENAME);
+			PlaySound(TEXT("upSound.wav"), NULL, SND_FILENAME);
 			isRunningBgMusic = false;
 		}
 	}
