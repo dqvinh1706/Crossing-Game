@@ -136,6 +136,24 @@ void CCenterMenu::addOption(Texture option, function<void()> func)
 	mWidth = findMenuWidth(mOptions);
 }
 
+void CCenterMenu::removeOption(Texture option)
+{
+	int pos = 0;
+	int n = mOptions.size();
+	for (pos = 0; pos < n; pos++) {
+		if (mOptions[pos] == option) {
+			// Erase option out
+			mOptions.erase(mOptions.begin() + pos);
+			mOptionsFunc.erase(mOptionsFunc.begin() + pos);
+
+			mHeight -= 1;
+			mWidth = findMenuWidth(mOptions);
+			return;
+		}
+	}
+	
+}
+
 void CCenterMenu::drawMenu(Console& console)
 {
 	int screenHeight = console.Height();
@@ -180,8 +198,10 @@ void  CCenterMenu::Run(Console& console) {
 			if(mOptionsFunc[mCurrChoice])
 				mOptionsFunc[mCurrChoice]();
 		}
-		if (mQuit)
+		if (mQuit) {
+			mQuit = false;
 			break;
+		}
 	} while (mOptionsFunc[mCurrChoice] || (isPressed != KEY::RETURN));
 }
 

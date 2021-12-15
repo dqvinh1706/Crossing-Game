@@ -33,10 +33,14 @@ private:
 	// Render game thread
 	thread mRenderGame;
 
+	// Music thread
+	thread mMusicThread;
+
 	// Game state
 	bool isPlaying; // True when player is playing
 	bool isPause; // True when player pause game
 	bool isPlayed; // True when player played game
+	bool isTurnOnMusic;
 
 	short mLevel;
 	short mMaxEnemies;
@@ -65,14 +69,28 @@ private:
 	CGAME(const CGAME&);
 	CGAME& operator=(const CGAME&);
 
+	// Post process
+	void setSettingMenu();
+	void setMainMenu();
+	void setPlayingArea(float = 1.0f, float = 1.0f);
+	void setScoreBoard();
+	void setObjects();
+	void setPeople();
+	void setAlienShip();
+
 	// Draw part
 	void drawPlayingArea(); // Vẽ khu vực chơi
 	void drawEnemies(); // Vẽ xe
 	void drawGame(); // Thực hiện vẽ trò chơi ra màn hình sau khi có dữ liệu
 
 	// Game flow
+	void musicThread();
 	void renderWhenPlayerDie();
 	void renderGameThread(KEY*);
+
+	void turnOnMusic();
+	void turnOffMusic();
+	void toggleMusic();
 
 	void resetGame(); // Thực hiện thiết lập lại toàn bộ dữ liệu như lúc đầu
 	void nextLevel();
@@ -80,6 +98,7 @@ private:
 
 	void pauseGame(); // Tạm dừng Thread
 	void resumeGame(); // Quay lai Thread
+	void goBackMainMenu();
 	void exitGame(); // Thực hiện thoát Thread
 
 	void updatePosPeople(KEY); // Thực hiện điều khiển di chuyển của CPEOPLE
@@ -89,15 +108,6 @@ private:
 public:
 	static CGAME* getGame();
 	~CGAME(); // Hủy tài nguyên đã cấp phát
-
-	// Post process
-	void setSettingMenu();
-	void setMainMenu();
-	void setPlayingArea(float = 1.0f, float = 1.0f);
-	void setScoreBoard();
-	void setObjects();
-	void setPeople();
-	void setAlienShip();
 
 	// Getter
 	unsigned int getLevel() const;

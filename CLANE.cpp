@@ -6,7 +6,6 @@ CLANE::CLANE(){
 	mLeftLimit = 0;
 	mRightLimit = 0;
 	mEnabledTrafficLight = false;
-	mEnableMusic = false;
 	mGreenLight = nullptr;
 	mRedLight = nullptr;
 	mCurrLightState = nullptr;
@@ -47,8 +46,8 @@ CLANE::~CLANE() {
 		delete object;
 		object = nullptr;
 	}
-
-	disableTrafficLight();
+	if (mEnabledTrafficLight)
+		disableTrafficLight();
 }
 
 CLANE& CLANE::operator=(const CLANE& other)
@@ -176,16 +175,6 @@ void CLANE::disableTrafficLight()
 	mCurrLightState = nullptr;
 }
 
-void CLANE::enableMusic()
-{
-	mEnableMusic = true;
-}
-
-void CLANE::disableMusic()
-{
-	mEnableMusic = false;
-}
-
 void CLANE::storeData(ofstream& ofs) 
 {
 	ofs.write(reinterpret_cast<char*> (&mEnabledTrafficLight), sizeof(bool));
@@ -232,6 +221,8 @@ void CLANE::loadData(ifstream& ifs)
 	ifs.read(reinterpret_cast<char*> (&size), sizeof(unsigned int));
 
 	Movable* temp = mObjects[0]->Clone();
+
+	// Erase the old vector obj
 	for (auto& object : mObjects) {
 		delete object;
 		object = nullptr;
@@ -329,5 +320,4 @@ void CLANE::drawObjectsOnLane(Console& console)
 	if (mEnabledTrafficLight) {
 		drawTrafficLight(console);
 	}
-
 }

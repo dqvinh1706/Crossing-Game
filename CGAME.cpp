@@ -12,6 +12,7 @@ CGAME::CGAME()  {
 
 	mScore = 0;
 	mHightScore = 0;
+
 	// Set obj
 	setMainMenu();
 	setSettingMenu();
@@ -27,7 +28,9 @@ CGAME* CGAME::getGame() {
 	return &mInstance;
 }
 
-CGAME::~CGAME() {}
+CGAME::~CGAME() {
+
+}
 
 void CGAME::setSettingMenu() {
 	Texture gameTitle = \
@@ -41,26 +44,26 @@ void CGAME::setSettingMenu() {
 
 	mSettingMenu.setMenuTitle(gameTitle, COLOUR::PINK);
 	mSettingMenu.setMarginTop(4);
-	mSettingMenu.addOption("Audio");
+	mSettingMenu.addOption("Turn Off Music", bind(&CGAME::toggleMusic, this));
 	mSettingMenu.addOption("Back to main menu", bind(&CCenterMenu::QuitMenu, &mSettingMenu));
 }
 
 void CGAME::setMainMenu() {
 	Texture gameTitle = \
-		" ######  ########   #######   ######   ######  #### ##    ##  ######      ######      ###    ##     ## ########\n"
-		"##    ## ##     ## ##     ## ##    ## ##    ##  ##  ###   ## ##    ##    ##    ##    ## ##   ###   ### ##       \n"
-		"##       ##     ## ##     ## ##       ##        ##  ####  ## ##          ##         ##   ##  #### #### ##       \n"
-		"##       ########  ##     ##  ######   ######   ##  ## ## ## ##   ####   ##   #### ##     ## ## ### ## ######   \n"
-		"##       ##   ##   ##     ##       ##       ##  ##  ##  #### ##    ##    ##    ##  ######### ##     ## ##       \n"
-		"##    ## ##    ##  ##     ## ##    ## ##    ##  ##  ##   ### ##    ##    ##    ##  ##     ## ##     ## ##       \n"
-		" ######  ##     ##  #######   ######   ######  #### ##    ##  ######      ######   ##     ## ##     ## ######## \n";
-
+		" ######  ########   #######   ######   ######  #### ##    ##  ######      ########   #######     ###    ########\n"
+		"##    ## ##     ## ##     ## ##    ## ##    ##  ##  ###   ## ##    ##     ##     ## ##     ##   ## ##   ##     ##\n"
+		"##       ##     ## ##     ## ##       ##        ##  ####  ## ##           ##     ## ##     ##  ##   ##  ##     ##\n"
+		"##       ########  ##     ##  ######   ######   ##  ## ## ## ##   ####    ########  ##     ## ##     ## ##     ##\n"
+		"##       ##   ##   ##     ##       ##       ##  ##  ##  #### ##    ##     ##   ##   ##     ## ######### ##     ##\n"
+		"##    ## ##    ##  ##     ## ##    ## ##    ##  ##  ##   ### ##    ##     ##    ##  ##     ## ##     ## ##     ##\n"
+		" ######  ##     ##  #######   ######   ######  #### ##    ##  ######      ##     ##  #######  ##     ## ########\n";
+	
 	mMainMenu.setMenuTitle(gameTitle);
 	mMainMenu.setMarginTop(4);
 	mMainMenu.addOption("New Game", bind(&CGAME::StartGame, this));
 	mMainMenu.addOption("Load Game", bind(&CGAME::loadGame, this));
 	mMainMenu.addOption("Setting", bind(&CCenterMenu::Run, &mSettingMenu, ref(*mConsole)));
-	mMainMenu.addOption("Quit", bind(&CCenterMenu::QuitMenu, &mMainMenu));
+	mMainMenu.addOption("Quit", bind(&CGAME::exitGame, this));
 }
 
 void CGAME::setPlayingArea(float scaleX, float scaleY) {
@@ -103,9 +106,6 @@ void CGAME::setObjects() {
 		case ENEMY::CCAR:
 		case ENEMY::CTRUCK:
 			mLane.enableTrafficLight();
-		case ENEMY::CBIRD:
-		case ENEMY::CDOG:
-			mLane.enableMusic();
 		default:
 			break;
 		}
@@ -133,9 +133,333 @@ void CGAME::setAlienShip()
 {
 	int alienPosX = RandomInt(mBottomRight.getX(), mTopLeft.getY() + 1);
 	int alienPosY = RandomInt(mTopLeft.getY(), mTopLeft.getY() - 10);
+	mAlienShip.reset();
 	mAlienShip.setXY(alienPosX, alienPosY);
 	mAlienShip.setPeople(&mPeople);
-	mAlienShip.reset();
+}
+
+void CGAME::drawPlayingArea() {
+	// Draw the border line
+	mConsole->DrawBorder(mTopLeft, mBottomRight, PLAYING_AREA_COLOUR);
+}
+
+void  CGAME::drawEnemies() {
+	for (auto& Lane : mLaneOfEnemies) {
+		Lane.drawObjectsOnLane(*mConsole);
+	}
+}
+
+void CGAME::drawGame() {
+	// Draw border
+	drawPlayingArea();
+	mScoreBoard->drawScoreBoard(this);
+
+	if (!mPeople.isDead()) {
+		// Draw people
+		mPeople.drawPeople(*mConsole);
+
+		// Draw object
+		drawEnemies();
+	}
+}
+
+void CGAME::musicThread()
+{
+	vector<CANIMAL*> listAnimalSound = { new CDOG(), new CBIRD() };
+	bool isRunningBgMusic = false;
+
+	while (isTurnOnMusic) {
+		if (!isRunningBgMusic) {
+			PlaySound(TEXT("BgMusic.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+		}
+		isRunningBgMusic = true;
+
+		if (!mPeople.isFinish()) {
+			if (!mPeople.isDead()) {
+				if (!isPause) {
+					//Sleep(5000);
+					/*int randomAnimalIndex = RandomInt(listAnimalSound.size() - 1, 0);
+					listAnimalSound[randomAnimalIndex]->Tell();*/
+					//isRunningBgMusic = false;
+				}
+			}
+			else {
+				if (mAlienShip.isFlyAway() == false) {
+					mAlienShip.Tell();
+					isRunningBgMusic = false;
+				}
+				else {
+					PlaySound(NULL, 0, 0);
+					isRunningBgMusic = false;
+				}
+			}
+		}
+		else {
+			PlaySound(TEXT("upLevelSound.wav"), NULL, SND_FILENAME);
+			isRunningBgMusic = false;
+		}
+	}
+
+	for (auto& animal : listAnimalSound) {
+		delete animal;
+		animal = nullptr;
+	}
+	listAnimalSound.clear();
+}
+
+void CGAME::renderWhenPlayerDie() {
+	while (true) {
+		mConsole->ClearScreen();
+
+		if (!mAlienShip.isReachPeople()) {
+			mAlienShip.reachPeople();
+			// Draw people
+			mPeople.drawPeople(*mConsole);
+		}
+		else {
+			if (!mAlienShip.isCapturePeople()) {
+				mAlienShip.capturePeople();
+			}
+			else {
+				mAlienShip.flyAway(mTopLeft.getY());
+
+				if (mAlienShip.isFlyAway()) {
+					break;
+				}
+			}
+		}
+
+		// Draw border
+		drawPlayingArea();
+		mScoreBoard->drawScoreBoard(this);
+	
+		mAlienShip.drawToConsole(*mConsole, mTopLeft.getX(), mBottomRight.getX());
+		
+		mConsole->Render();
+		Sleep(30);
+	}
+}
+
+void CGAME::renderGameThread(KEY* MOVING) {
+	while (isPlaying) {
+		// Clear the old screen
+		mConsole->ClearScreen();
+
+		if (!isPause) {
+			if (!mPeople.isDead()) {
+				updatePosPeople(*MOVING);
+				updatePosEnemies();
+
+				if (mPeople.isImpact(getEnemyLane())) {
+					mPeople.Dead();
+					thread t = thread(&CGAME::renderWhenPlayerDie, this);
+					t.join();
+				}
+
+				if (mPeople.isFinish()) {
+					nextLevel();
+				}
+			}
+			else {
+				Texture deadText = \
+					"               You are DEAD                 \n"
+					"Press Y to play again. Press any key to exit";
+				mConsole->DrawObject(30, 25, deadText, COLOUR::RED);
+			}
+		}
+		
+		*MOVING = KEY::SPACE;
+		drawGame();
+
+		if (isPause) {
+			Texture deadText = \
+				"      Game is PAUSE\n"
+				"Press any key to continue";
+			mConsole->DrawObject(45, 25, deadText, COLOUR::RED);
+		}
+		
+		// Render out console
+		mConsole->Render();
+		Sleep(30);
+	}
+}
+
+void CGAME::turnOnMusic()
+{
+	isTurnOnMusic = true;
+	mMusicThread = thread(&CGAME::musicThread, this);
+}
+
+void CGAME::turnOffMusic()
+{
+	isTurnOnMusic = false;
+	mMusicThread.join();
+	PlaySound(NULL, 0, 0);
+}
+
+void CGAME::toggleMusic()
+{
+	if (isTurnOnMusic) {
+		mSettingMenu.setOption(0, "Turn On Music");
+		turnOffMusic();
+	}
+	else {
+		mSettingMenu.setOption(0, "Turn Off Music");
+		turnOnMusic();
+	}
+}
+
+void CGAME::resetGame() {
+	mLaneOfEnemies.clear();
+
+	mLevel = 1;
+	mMinEnemies = 1;
+	mMaxEnemies = mMinEnemies;
+
+	mScore = 0;
+	
+	setObjects();
+	setPeople();
+	setAlienShip();
+}
+
+void CGAME::nextLevel() {
+	if (mLevel == 3){
+		mLevel = 1;
+		mMinEnemies = 1;
+		mMaxEnemies = mMinEnemies;
+	}
+	else {
+		mLevel++;
+		mMinEnemies++;
+		mMaxEnemies = mMinEnemies + 1;
+	}
+	
+	mLaneOfEnemies.clear();
+	
+	setObjects();
+	setPeople();
+	mScore += 100;
+	mHightScore += 100;
+}
+
+void CGAME::playGame() {
+	isPlaying = true;
+	isPause = false;
+	isPlayed = true;
+
+	KEY MOVING = KEY::SPACE;
+	KEY temp;
+
+	mRenderGame = thread(&CGAME::renderGameThread, this, &MOVING);
+
+	while (isPlaying) {
+		if (!getPeople().isDead()) {
+			if (_kbhit()) {
+				temp = (KEY)toupper(_getch());
+				switch (temp)
+				{
+				case KEY::SAVE_GAME:
+					pauseGame();
+					saveGame();
+					resumeGame();
+					break;
+				case KEY::LOAD_GAME:
+					pauseGame();
+					loadGame();
+					resumeGame();
+					break;
+				case KEY::PAUSE_GAME:
+					pauseGame();
+					break;
+				case KEY::ESC:
+					goBackMainMenu();
+					return;
+				default:
+					resumeGame();
+					MOVING = (KEY)temp;
+					break;
+				}
+			}
+		}
+		else {
+			// Check if the alien ship has fly out console screen
+			if (mAlienShip.isFlyAway()) {
+				if (_kbhit()) {
+					// Catch the key press
+					temp = (KEY)toupper(_getch());
+
+					// Check the key
+					if (temp == KEY::YES) {
+						resetGame();
+					}
+					else {
+						goBackMainMenu();
+						return;
+					}
+				}
+			}
+		}
+	}
+}
+
+void CGAME::pauseGame() {
+	isPause = true;
+}
+
+void CGAME::resumeGame() {
+	isPause = false;
+}
+
+void CGAME::goBackMainMenu()
+{
+	if (isPlaying) {
+		if (mPeople.isDead()) {
+			isPause = false;
+			isPlayed = false;
+			resetGame();
+			mMainMenu.removeOption("Continue");
+		}
+		isPlaying = false;
+		mRenderGame.join();
+	}
+}
+
+void CGAME::exitGame() {
+	if (isTurnOnMusic)
+		turnOffMusic();
+
+	mMainMenu.QuitMenu();
+}
+
+void CGAME::updatePosPeople(KEY direction) {
+	mPeople.Move(direction, LANE_SIZE);
+}
+
+void CGAME::updatePosEnemies() {
+	for (auto& Lane : mLaneOfEnemies) {
+		Lane.updateObjectsOnLane();
+	}
+}
+
+void CGAME::StartGame() {
+	if (isPlayed) {
+		int result = MessageBox(
+			NULL,
+			L"You will lost all the unsaved process.\nContine to create new game???", // Text in msg box
+			L"New Game", // Msg box title
+			MB_YESNO | MB_ICONWARNING | MB_TOPMOST | MB_APPLMODAL // Mode ask yes no
+		);
+
+		if (result == IDYES) {
+			resetGame();
+			playGame();
+		}
+	}else {
+		if (mMainMenu.isHasOption("Continue") == false)
+			mMainMenu.insertOption(1, "Continue", bind(&CGAME::playGame, this));
+		playGame();
+	}
 }
 
 CPEOPLE CGAME::getPeople() const {
@@ -181,195 +505,6 @@ string CGAME::getHelp() const
 Console* CGAME::getConsole()
 {
 	return mConsole;
-}
-
-void CGAME::drawPlayingArea() {
-	// Draw the border line
-	mConsole->DrawBorder(mTopLeft, mBottomRight, PLAYING_AREA_COLOUR);
-}
-
-void  CGAME::drawEnemies() {
-	for (auto& Lane : mLaneOfEnemies) {
-		Lane.drawObjectsOnLane(*mConsole);
-	}
-}
-
-void CGAME::drawGame() {
-	// Draw border
-	drawPlayingArea();
-	mScoreBoard->drawScoreBoard(this);
-	// Draw people
-	mPeople.drawPeople(*mConsole);
-
-	// Draw object
-	drawEnemies();
-}
-
-void CGAME::renderWhenPlayerDie() {
-	thread playSound = thread(&CAlienShip::Sound, &mAlienShip);
-	while (true) {
-		mConsole->ClearScreen();
-
-		if (!mAlienShip.isReachPeople()) {
-			mAlienShip.reachPeople();
-			// Draw people
-			mPeople.drawPeople(*mConsole);
-		}
-		else {
-			if (!mAlienShip.isCapturePeople()) {
-				mAlienShip.capturePeople();
-			}
-			else {
-				mAlienShip.flyAway(mTopLeft.getY());
-
-				if (mAlienShip.isFlyAway()) {
-					playSound.join();
-					break;
-				}
-			}
-		}
-
-		// Draw border
-		drawPlayingArea();
-		mScoreBoard->drawScoreBoard(this);
-	
-		mAlienShip.drawToConsole(*mConsole, mTopLeft.getX(), mBottomRight.getX());
-		
-		mConsole->Render();
-		Sleep(30);
-	}
-}
-
-void CGAME::renderGameThread(KEY* MOVING) {
-	while (isPlaying) {
-		// Clear the old screen
-		mConsole->ClearScreen();
-
-		if (!isPause) {
-			if (!mPeople.isDead()) {
-				updatePosPeople(*MOVING);
-				updatePosEnemies();
-
-				if (mPeople.isImpact(getEnemyLane())) {
-					mPeople.Dead();
-					thread t = thread(&CGAME::renderWhenPlayerDie, this);
-					t.join();
-				}
-
-				if (mPeople.isFinish()) {
-					nextLevel();
-				}
-			}
-		}
-		*MOVING = KEY::SPACE;
-		drawGame();
-
-		// Render out console
-		mConsole->Render();
-		Sleep(30);
-	}
-}
-
-void CGAME::resetGame() {
-	mLaneOfEnemies.clear();
-
-	mLevel = 1;
-	mMinEnemies = 1;
-	mMaxEnemies = mMinEnemies;
-
-	mScore = 0;
-	
-	setObjects();
-	setPeople();
-	setAlienShip();
-}
-
-void CGAME::nextLevel() {
-	if (mLevel == 3){
-		mLevel = 1;
-		mMinEnemies = 1;
-		mMaxEnemies = mMinEnemies;
-	}
-	else {
-		mLevel++;
-		mMinEnemies++;
-		mMaxEnemies = mMinEnemies + 1;
-	}
-	
-	mLaneOfEnemies.clear();
-	setObjects();
-	setPeople();
-	mScore += 100;
-	mHightScore = mScore;
-}
-
-void CGAME::playGame() {
-	isPlaying = true;
-	isPause = false;
-	isPlayed = true;
-
-	KEY MOVING = KEY::SPACE;
-	KEY temp;
-
-	mRenderGame = thread(&CGAME::renderGameThread, this, &MOVING);
-
-	while (isPlaying) {
-		temp = (KEY)toupper(_getch());
-		if (!getPeople().isDead()) {
-			switch (temp)
-			{
-			case KEY::SAVE_GAME:
-				pauseGame();
-				saveGame();
-				resumeGame();
-				break;
-			case KEY::LOAD_GAME:
-				pauseGame();
-				loadGame();
-				resumeGame();
-				break;
-			case KEY::PAUSE_GAME:
-				pauseGame();
-				break;
-			case KEY::ESC:
-				exitGame();
-				return;
-			default:
-				resumeGame();
-				MOVING = (KEY)temp;
-				break;
-			}
-		}
-		else {
-			if (temp == KEY::YES) {
-				resetGame();
-			}
-			else {
-				exitGame();
-				return;
-			}
-		}
-	}
-}
-
-void CGAME::StartGame() {
-	if (isPlayed) {
-		int result = MessageBox(
-			NULL,
-			L"You will lost all the unsaved process.\nContine to create new game???", // Text in msg box
-			L"New Game", // Msg box title
-			MB_YESNO | MB_ICONWARNING | MB_TOPMOST | MB_APPLMODAL // Mode ask yes no
-		);
-
-		if (result == IDYES) {
-			resetGame();
-			playGame();
-		}
-	}else {
-		if (mMainMenu.isHasOption("Continue") == false)
-			mMainMenu.insertOption(1, "Continue", bind(&CGAME::playGame, this));
-		playGame();
-	}
 }
 
 void CGAME::loadGame() {
@@ -426,31 +561,8 @@ void CGAME::saveGame() {
 	}
 }
 
-void CGAME::pauseGame() {
-	isPause = true;
-}
-
-void CGAME::resumeGame() {
-	isPause = false;
-}
-
-void CGAME::exitGame() {
-	if (isPlaying) {
-		isPlaying = false;
-		mRenderGame.join();
-	}
-}
-
-void CGAME::updatePosPeople(KEY direction) {
-	mPeople.Move(direction,LANE_SIZE);
-}
-
-void CGAME::updatePosEnemies() {
-	for (auto& Lane : mLaneOfEnemies) {
-		Lane.updateObjectsOnLane();
-	}
-}
 
 void CGAME::Run() {
+	turnOnMusic();
 	mMainMenu.Run(*mConsole);
 }

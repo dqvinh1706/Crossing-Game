@@ -82,11 +82,6 @@ bool CAlienShip::isFlyAway() const
 	return mIsFlyAway;
 }
 
-void CAlienShip::Sound() const
-{
-	mPlaySound = PlaySound(TEXT("AlienShip.wav"), NULL, SND_FILENAME | SND_SYNC);
-}
-
 void CAlienShip::reset()
 {
 	mIsReachPeople = false;
@@ -133,5 +128,10 @@ void CAlienShip::flyAway(int y)
 		mIsFlyAway = true;
 	int speed = mSpeed;
 	Move(0, -speed);
+}
+
+void CAlienShip::Tell()
+{
+	PlaySound(TEXT("AlienShip.wav"), NULL, SND_FILENAME);
 }
 

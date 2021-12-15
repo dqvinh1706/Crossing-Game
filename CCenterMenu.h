@@ -43,6 +43,7 @@ public:
 	void insertOption(int,Texture,function<void()>);
 	void addOption(Texture);
 	void addOption(Texture, function<void()>);
+	void removeOption(Texture);
 	void drawMenu(Console&);
 
 	void Run(Console&);

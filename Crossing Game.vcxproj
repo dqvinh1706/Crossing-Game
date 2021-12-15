@@ -147,7 +147,6 @@
     <ClCompile Include="CGAME.cpp" />
     <ClCompile Include="CLANE.cpp" />
     <ClCompile Include="CCenterMenu.cpp" />
-    <ClCompile Include="CMessagePopup.cpp" />
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="CPEOPLE.cpp" />
     <ClCompile Include="CPOINT2D.cpp" />
@@ -171,7 +170,6 @@
     <ClInclude Include="CGAME.h" />
     <ClInclude Include="CLANE.h" />
     <ClInclude Include="CCenterMenu.h" />
-    <ClInclude Include="CMessagePopup.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="CPEOPLE.h" />

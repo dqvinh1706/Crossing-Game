@@ -50,4 +50,5 @@ CANIMAL* CDOG::Clone() {
 
 void CDOG::Tell()
 {
+	PlaySound(TEXT("Dog.wav"), NULL, SND_FILENAME);
 }

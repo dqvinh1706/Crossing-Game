@@ -69,9 +69,6 @@
     <ClCompile Include="CScoreBoard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CMessagePopup.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CAlienShip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -144,9 +141,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CScoreBoard.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CMessagePopup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CAlienShip.h">

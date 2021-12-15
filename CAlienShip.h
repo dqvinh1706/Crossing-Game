@@ -24,12 +24,12 @@ public:
 	bool isReachPeople() const;
 	bool isCapturePeople() const;
 	bool isFlyAway() const;
-	void Sound() const;
 
 	void reset();
 	void reachPeople();
 	void capturePeople();
 	void flyAway(int);
+	void Tell();
 };
 
 #endif // !CALIEN_SHIP_H
