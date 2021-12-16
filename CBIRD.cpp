@@ -53,5 +53,5 @@ CANIMAL* CBIRD::Clone() {
 
 void CBIRD::Tell()
 {
-	PlaySound(TEXT("AlienShip.wav"), NULL, SND_FILENAME | SND_SYNC);
+	PlaySound(TEXT("Bird.wav"), NULL, SND_FILENAME | SND_SYNC);
 }

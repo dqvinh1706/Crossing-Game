@@ -91,10 +91,6 @@ void CPEOPLE::setState(bool isAlive)
 	mState = isAlive;
 }
 
-void CPEOPLE::Dead() {
-	mState = false;
-}
-
 int CPEOPLE::getX() const {
 	return mCurrPos.getX();
 }

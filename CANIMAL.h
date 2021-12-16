@@ -3,9 +3,8 @@
 
 #include "Console.h"
 #include "Movable.h"
-#include "Tellable.h"
 
-class CANIMAL : public Movable, public Tellable {
+class CANIMAL : public Movable{
 protected:
 	// Current position
 	CPOINT2D mCurrPos;

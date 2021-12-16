@@ -48,15 +48,16 @@ public:
 	ITrafficLightState* getGreenLightState();
 
 	// Method
-	void enableTrafficLight();
-	void disableTrafficLight();
-	void storeData(ofstream&);
-	void loadData(ifstream&);
-	void generateObjectsOnLane(const ENEMY&, int);
-	void updateObjectsOnLane();
-	void drawTrafficLight(Console&);
-	void drawObjectsOnLane(Console&);
+	void enableTrafficLight(); // Bật đèn xanh đèn đỏ
+	void disableTrafficLight(); // Tắt đèn xanh đèn đỏ
+	void storeData(ofstream&); // Lưu đối tương CLANE
+	void loadData(ifstream&); // Tải đối tượng CLANE
+	// Hàm tạo các đối tượng bên trong CLANE bằng loại và số lượng
+	void generateObjectsOnLane(const ENEMY&, int); 
+	void updateObjectsOnLane(); // Hàm update vị trí các đối tượng trên CLANE
+	void drawTrafficLight(Console&); // Hàm vẽ đèn xanh đèn đỏ
+	// Hàm vẽ các đối tưởng trên 1 CLANE bao gồm đèn xanh đèn đỏ
+	void drawObjectsOnLane(Console&); 
 };
-
 
 #endif // CLANE_H

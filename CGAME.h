@@ -15,7 +15,7 @@ private:
 	CCenterMenu mMainMenu;
 	CCenterMenu mSettingMenu;
 
-	// Score
+	// Score Board
 	CScoreBoard* mScoreBoard;
 
 	// Enemies obj
@@ -47,7 +47,7 @@ private:
 	short mMinEnemies;
 
 	unsigned int mScore;
-	unsigned int mHightScore;
+	unsigned int mHighScore;
 
 	// Default game setting 
 	vector<pair<float, ENEMY>> mLanes = {
@@ -88,6 +88,7 @@ private:
 	void renderWhenPlayerDie();
 	void renderGameThread(KEY*);
 
+	// Music part
 	void turnOnMusic();
 	void turnOffMusic();
 	void toggleMusic();
@@ -104,7 +105,7 @@ private:
 	void updatePosPeople(KEY); // Thực hiện điều khiển di chuyển của CPEOPLE
 	void updatePosEnemies(); // Thực hiện cho tất cả các xe va thú di chuyển
 
-	void StartGame(); // Thực hiện bắt đầu vào trò chơi
+	void NewGame(); // Thực hiện chơi trò chơi
 public:
 	static CGAME* getGame();
 	~CGAME(); // Hủy tài nguyên đã cấp phát

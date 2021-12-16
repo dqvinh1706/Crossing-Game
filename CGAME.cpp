@@ -11,7 +11,7 @@ CGAME::CGAME()  {
 	mMaxEnemies = mMinEnemies;
 
 	mScore = 0;
-	mHightScore = 0;
+	mHighScore = 0;
 
 	// Set obj
 	setMainMenu();
@@ -60,7 +60,7 @@ void CGAME::setMainMenu() {
 	
 	mMainMenu.setMenuTitle(gameTitle);
 	mMainMenu.setMarginTop(4);
-	mMainMenu.addOption("New Game", bind(&CGAME::StartGame, this));
+	mMainMenu.addOption("New Game", bind(&CGAME::NewGame, this));
 	mMainMenu.addOption("Load Game", bind(&CGAME::loadGame, this));
 	mMainMenu.addOption("Setting", bind(&CCenterMenu::Run, &mSettingMenu, ref(*mConsole)));
 	mMainMenu.addOption("Quit", bind(&CGAME::exitGame, this));
@@ -166,33 +166,62 @@ void CGAME::drawGame() {
 void CGAME::musicThread()
 {
 	vector<CANIMAL*> listAnimalSound = { new CDOG(), new CBIRD() };
-	bool isRunningBgMusic = false;
+	bool isRunningBgMusic = false; // True if Bg music is running
+	
+	// Use for animal sound
+	clock_t startTime;
+	clock_t endTime;
+	int duration = 5;
 
+	// Run continuely
 	while (isTurnOnMusic) {
+		// If the bg music is not running, run it
 		if (!isRunningBgMusic) {
+			isRunningBgMusic = true;
 			PlaySound(TEXT("BgMusic.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+
+			startTime = clock();
 		}
-		isRunningBgMusic = true;
+		
+		if (!isPlaying) {
+			startTime = clock();
+			continue;
+		}
+		// If people reach next level
+		if (mPeople.isFinish()) {
+			// Play the next level sound
+			PlaySound(TEXT("upLevelSound.wav"), NULL, SND_FILENAME);
 
-		if (!mPeople.isFinish()) {
-			if (!mPeople.isDead()) {
-				if (!isPause) {
-				/*	int randomAnimalIndex = RandomInt(listAnimalSound.size() - 1, 0);
-					listAnimalSound[randomAnimalIndex]->Tell();
+			// Bg music is off
+			isRunningBgMusic = false;
+		}
+		else {
+			// If game do not pause
+			if (!isPause) {
+				// If player still alive
+				if (!mPeople.isDead()) {
+					endTime = clock();
 
-					isRunningBgMusic = false;*/
+					int interval = (endTime - startTime) / CLOCKS_PER_SEC;
+					if (interval >= duration) {
+						int randomSoundIndex = RandomInt(listAnimalSound.size() - 1, 0);
+						listAnimalSound[randomSoundIndex]->Tell();
+						isRunningBgMusic = false;
+					}
+				}
+				else {
+					// If the ship is not fly out the screen, play it sound
+					// Else dont play any sound
+					if (mAlienShip.isFlyAway() == false) {
+						mAlienShip.Tell();
+						isRunningBgMusic = false;
+					}
 				}
 			}
 			else {
-				if (mAlienShip.isFlyAway() == false) {
-					mAlienShip.Tell();
-					isRunningBgMusic = false;
-				}
+				// Update the time while pause game
+				startTime = clock();
 			}
-		}
-		else {
-			PlaySound(TEXT("upSound.wav"), NULL, SND_FILENAME);
-			isRunningBgMusic = false;
 		}
 	}
 
@@ -224,13 +253,8 @@ void CGAME::renderWhenPlayerDie() {
 				}
 			}
 		}
-
-		// Draw border
-		drawPlayingArea();
-		mScoreBoard->drawScoreBoard(this);
-	
+		drawGame();
 		mAlienShip.drawToConsole(*mConsole, mTopLeft.getX(), mBottomRight.getX());
-		
 		mConsole->Render();
 		Sleep(30);
 	}
@@ -247,7 +271,6 @@ void CGAME::renderGameThread(KEY* MOVING) {
 				updatePosEnemies();
 
 				if (mPeople.isImpact(getEnemyLane())) {
-					mPeople.Dead();
 					thread t = thread(&CGAME::renderWhenPlayerDie, this);
 					t.join();
 				}
@@ -260,13 +283,12 @@ void CGAME::renderGameThread(KEY* MOVING) {
 				Texture deadText = \
 					"               You are DEAD                 \n"
 					"Press Y to play again. Press any key to exit";
-				mConsole->DrawObject(30, 25, deadText, COLOUR::RED);
+				mConsole->DrawObject(35, 25, deadText, COLOUR::RED);
 			}
 		}
-		
+
 		*MOVING = KEY::SPACE;
 		drawGame();
-
 		if (isPause) {
 			Texture deadText = \
 				"      Game is PAUSE\n"
@@ -336,7 +358,7 @@ void CGAME::nextLevel() {
 	setObjects();
 	setPeople();
 	mScore += 100;
-	mHightScore += 100;
+	mHighScore += 100;
 }
 
 void CGAME::playGame() {
@@ -411,8 +433,9 @@ void CGAME::goBackMainMenu()
 {
 	if (isPlaying) {
 		if (mPeople.isDead()) {
-			isPause = false;
+			// If player died, then press no, reset state, high score
 			isPlayed = false;
+			mHighScore = 0;
 			resetGame();
 			mMainMenu.removeOption("Continue");
 		}
@@ -438,7 +461,7 @@ void CGAME::updatePosEnemies() {
 	}
 }
 
-void CGAME::StartGame() {
+void CGAME::NewGame() {
 	if (isPlayed) {
 		int result = MessageBox(
 			NULL,
@@ -448,6 +471,7 @@ void CGAME::StartGame() {
 		);
 
 		if (result == IDYES) {
+			mHighScore = 0;
 			resetGame();
 			playGame();
 		}
@@ -482,8 +506,7 @@ unsigned int CGAME::getScore() const
 }
 
 unsigned int CGAME::getHighScore() const {
-	return mHightScore;
-
+	return mHighScore;
 }
 
 string CGAME::getHelp() const
@@ -520,7 +543,7 @@ void CGAME::loadGame() {
 	}
 
 	ifs.read(reinterpret_cast<char*> (&mScore), sizeof(unsigned int));
-	ifs.read(reinterpret_cast<char*> (&mHightScore), sizeof(unsigned int));
+	ifs.read(reinterpret_cast<char*> (&mHighScore), sizeof(unsigned int));
 	ifs.read(reinterpret_cast<char*> (&mLevel), sizeof(short));
 	ifs.read(reinterpret_cast<char*> (&mMaxEnemies), sizeof(short));
 	ifs.read(reinterpret_cast<char*> (&mMinEnemies), sizeof(short));
@@ -530,6 +553,8 @@ void CGAME::loadGame() {
 	for (auto& Lane : mLaneOfEnemies) {
 		Lane.loadData(ifs);
 	}
+
+	ifs.close();
 }
 
 void CGAME::saveGame() {
@@ -544,7 +569,7 @@ void CGAME::saveGame() {
 	ofs.write(reinterpret_cast<char*> (&isPlayed), sizeof(bool));
 
 	ofs.write(reinterpret_cast<char*> (&mScore), sizeof(unsigned int));
-	ofs.write(reinterpret_cast<char*> (&mHightScore), sizeof(unsigned int));
+	ofs.write(reinterpret_cast<char*> (&mHighScore), sizeof(unsigned int));
 	ofs.write(reinterpret_cast<char*> (&mLevel), sizeof(short));
 	ofs.write(reinterpret_cast<char*> (&mMaxEnemies), sizeof(short));
 	ofs.write(reinterpret_cast<char*> (&mMinEnemies), sizeof(short));
@@ -555,6 +580,8 @@ void CGAME::saveGame() {
 	for (auto& Lane : mLaneOfEnemies) {
 		Lane.storeData(ofs);
 	}
+
+	ofs.close();
 }
 
 

@@ -36,7 +36,6 @@ public:
 	void setXY(int, int);
 	void setLimitZone(CPOINT2D, CPOINT2D);
 	void setState(bool);
-	void Dead();
 
 	// Getter
 	int getX() const;
